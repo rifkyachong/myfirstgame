@@ -1,0 +1,22 @@
+v   component is not a constructor? Well I can't use arraw function. 
+    How to create a text in canvas
+    clearRect behaves like an eraser. How to delete only the toppest part of overlapped object? 
+v   How to create a pattern in canvas
+v   SVG basics
+v   Read applying style documentaries 
+
+v   detect click and coordinates
+    detech click and if the box is clicked
+v   Browser zoom and it's effect to canvas. it seems no effect
+v   Canvas border and padding effect to e.offsetX e.offsetY. offset includes padding
+
+v   Create rerender systems
+    add controller for windows and for touch device
+v   onmouseclick is called after onmouseup. found issue
+v   onmouseup and onclick wont fired if the curson leaves element.
+v   onclick won't fired if the cursor is other than left click;
+v   mouseevent.button = 0 (leftclick), 1 (middle), 2 (rightclick);
+v   all mouseevent available
+v   which element keyboard event can attach to? focusable element, force focus can be done via tabIndex property on element
+v   keyboard event
+    touch event, preventDefault on touch event prevents mouse click event to occur

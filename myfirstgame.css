@@ -1,0 +1,9 @@
+html {
+  box-sizing: border-box;
+}
+
+canvas {
+  border: 10px solid #d3d3d3;
+  padding: 10px;
+  background-color: #f1f1f1;
+}
