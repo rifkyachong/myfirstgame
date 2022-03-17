@@ -12,28 +12,6 @@ const startGame = () => {
   downBtn = document.getElementById("down-btn");
   moveBtns = document.querySelectorAll(".move-btn");
 
-  upBtn.onmousedown = (e) => {
-    console.log("onclick called");
-    myComponent.speedY = -1;
-  };
-  downBtn.onmousedown = (e) => {
-    myComponent.speedY = 1;
-  };
-  rightBtn.onmousedown = (e) => {
-    myComponent.speedX = 1;
-  };
-  leftBtn.onmousedown = (e) => {
-    myComponent.speedX = -1;
-  };
-
-  [...moveBtns].forEach(
-    (btn) =>
-      (btn.onmouseup = (e) => {
-        myComponent.speedX = 0;
-        myComponent.speedY = 0;
-      })
-  );
-
   // for (let btn of moveBtns) {
   //   btn.onclick = handleClick;
   //   btn.onmouseup = handleMouseUp;
@@ -59,12 +37,31 @@ function Component(x, y, width, height, color) {
     gameArea.context.fillStyle = this.color;
     gameArea.context.fillRect(this.x, this.y, this.width, this.height);
   };
+  this.newPos = () => {
+    this.x += this.speedX;
+    this.y += this.speedY;
+  };
 }
 
 const rerenderGameArea = () => {
   gameArea.clear();
-  myComponent.x += myComponent.speedX;
-  myComponent.y += myComponent.speedY;
+  let sumSpeedX = 0;
+  let sumSpeedY = 0;
+  if (gameArea.keys && gameArea.keys["ArrowUp"]) {
+    sumSpeedY -= 1;
+  }
+  if (gameArea.keys && gameArea.keys["ArrowDown"]) {
+    sumSpeedY += 1;
+  }
+  if (gameArea.keys && gameArea.keys["ArrowLeft"]) {
+    sumSpeedX -= 1;
+  }
+  if (gameArea.keys && gameArea.keys["ArrowRight"]) {
+    sumSpeedX += 1;
+  }
+  myComponent.speedX = sumSpeedX;
+  myComponent.speedY = sumSpeedY;
+  myComponent.newPos();
   myComponent.render();
   //process before update
   window.requestAnimationFrame(rerenderGameArea);
@@ -77,28 +74,25 @@ const gameArea = {
     this.canvas.height = 300;
     document.getElementById("canvas-wrapper").append(this.canvas);
     this.context = this.canvas.getContext("2d");
+
+    window.addEventListener("keydown", (e) => {
+      this.keys = this.keys || [];
+      console.log(e.key);
+      // console.log(this.keys);
+      this.keys[e.key] = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      this.keys[e.key] = false;
+      // console.log(this.keys);
+    });
   },
   clear: function () {
     if (this.context) {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
   },
+  // this is wierd because interval probably will deleted after the first render
   interval: window.requestAnimationFrame(rerenderGameArea),
 };
 
-const handleMouseDown = (e) => {
-  console.log(`onmousedown: ${e.target.id}, button: ${e.which}`);
-};
-
-const handleMouseUp = (e) => {
-  console.log(`onmouseup: ${e.target.id}, button: ${e.which}`);
-};
-
-const handleClick = (e) => {
-  console.log(`onclick: ${e.target.id}, button: ${e.which}`);
-};
-
-const handleKeyDown = (e) => {
-  console.log(`key: ${e.key}`);
-};
 startGame();

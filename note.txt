@@ -19,4 +19,5 @@ v   mouseevent.button = 0 (leftclick), 1 (middle), 2 (rightclick);
 v   all mouseevent available
 v   which element keyboard event can attach to? focusable element, force focus can be done via tabIndex property on element
 v   keyboard event
+    ArrowUp ArrowDown ArrowLeft ArrowRight
     touch event, preventDefault on touch event prevents mouse click event to occur
