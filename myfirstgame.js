@@ -44,45 +44,82 @@ function Component(x, y, width, height, color) {
     this.y += this.speedY;
   };
   this.touch = (obstacle) => {
-    let [top, bottom, left, right] = [
-      this.y,
-      this.y + this.height,
-      this.x,
-      this.x + this.width,
-    ];
-    let [topObs, bottomObs, leftObs, rightObs] = [
-      obstacle.y,
+    let [topBound, bottomBound, leftBound, rightBound] = [
+      obstacle.y - this.height,
       obstacle.y + obstacle.height,
-      obstacle.x,
+      obstacle.x - this.width,
       obstacle.x + obstacle.width,
     ];
+
     if (
-      bottom > topObs &&
-      top < bottomObs &&
-      right > leftObs &&
-      left < leftObs
+      this.x > leftBound &&
+      this.x < rightBound &&
+      this.y > topBound &&
+      this.y < bottomBound
     ) {
-      this.x = leftObs - this.width;
+      let distanceTop = Math.abs(this.y - topBound);
+      let distanceBottom = Math.abs(this.y - bottomBound);
+      let distanceLeft = Math.abs(this.x - leftBound);
+      let distanceRight = Math.abs(this.x - rightBound);
+
+      let closest = Math.min(
+        distanceTop,
+        distanceBottom,
+        distanceLeft,
+        distanceRight
+      );
+      if (closest === distanceTop) {
+        this.y = topBound;
+      }
+      if (closest === distanceBottom) {
+        this.y = bottomBound;
+      }
+      if (closest === distanceLeft) {
+        this.x = leftBound;
+      }
+      if (closest === distanceRight) {
+        this.x = rightBound;
+      }
     }
-    if (
-      bottom > topObs &&
-      top < bottomObs &&
-      left < rightObs &&
-      right > rightObs
-    ) {
-      this.x = rightObs;
-    }
-    if (right > leftObs && left < rightObs && bottom > topObs && top < topObs) {
-      this.y = topObs - this.height;
-    }
-    if (
-      right > leftObs &&
-      left < rightObs &&
-      top < bottomObs &&
-      bottom > bottomObs
-    ) {
-      this.y = bottomObs;
-    }
+    // let [top, bottom, left, right] = [
+    //   this.y,
+    //   this.y + this.height,
+    //   this.x,
+    //   this.x + this.width,
+    // ];
+    // let [topObs, bottomObs, leftObs, rightObs] = [
+    //   obstacle.y,
+    //   obstacle.y + obstacle.height,
+    //   obstacle.x,
+    //   obstacle.x + obstacle.width,
+    // ];
+    // if (
+    //   bottom > topObs &&
+    //   top < bottomObs &&
+    //   right > leftObs &&
+    //   left < leftObs
+    // ) {
+    //   this.x = leftObs - this.width;
+    // }
+    // if (
+    //   bottom > topObs &&
+    //   top < bottomObs &&
+    //   left < rightObs &&
+    //   right > rightObs
+    // ) {
+    //   this.x = rightObs;
+    // }
+    // if (right > leftObs && left < rightObs && bottom > topObs && top < topObs) {
+    //   this.y = topObs - this.height;
+    // }
+    // if (
+    //   right > leftObs &&
+    //   left < rightObs &&
+    //   top < bottomObs &&
+    //   bottom > bottomObs
+    // ) {
+    //   this.y = bottomObs;
+    // }
 
     // if (
     //   left > obstacle.x - this.width &&
