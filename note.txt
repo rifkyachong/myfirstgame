@@ -27,5 +27,4 @@ v   1. Closest Method, only detect position. Issue: high speed, very thin obstac
 v   2. Look at the both side of the player box. Issue: very small player box, the solution i made not mutually exclusive
 v   3. the best solution is to detect tangent speed and then calculate from there
 
-    Create mathematical model of boundary Detector
-    
+v   Create mathematical model of boundary Detector

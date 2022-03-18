@@ -77,14 +77,15 @@ function Component(x, y, width, height, color) {
   this.leftMax;
   this.topMax;
   this.bottomMax;
-  this.dx = null;
-  this.dy = null;
+  this.speedX = null;
+  this.speedY = null;
   this.width = width;
   this.height = height;
   this.color = color;
   this.onDrag = false;
   this.initialOffsetTop = 0;
   this.initialOffsetLeft = 0;
+  this.onFall = true;
   this.render = () => {
     gameArea.context.fillStyle = this.color;
     gameArea.context.fillRect(this.x, this.y, this.width, this.height);
@@ -112,10 +113,10 @@ function Component(x, y, width, height, color) {
     ) {
       this.rightMax = left;
     } else {
-      this.rightMax = gameArea.canvas.width;
+      this.rightMax = gameArea.canvas.width - this.width;
     }
 
-    // right obstacle
+    // left obstacle
     if (
       this.x >= right &&
       areIntersected(
@@ -150,7 +151,7 @@ function Component(x, y, width, height, color) {
     ) {
       this.bottomMax = top;
     } else {
-      this.bottomMax = gameArea.canvas.height;
+      this.bottomMax = gameArea.canvas.height - this.height;
     }
 
     if (
@@ -214,6 +215,13 @@ const rerenderGameArea = () => {
     myComponent.y = gameArea.cursorPosY - myComponent.initialOffsetTop;
     myComponent.dx = gameArea.deltaX;
     myComponent.dy = gameArea.deltaY;
+  } else if (myComponent.onFall) {
+    myComponent.speedY = Math.min(myComponent.speedY + 0.1, 10);
+    myComponent.y += myComponent.speedY;
+    if (myComponent.y > myComponent.bottomMax) {
+      myComponent.onFall = false;
+      myComponent.speedY = 0;
+    }
   }
 
   myComponent.newPos();
@@ -226,6 +234,7 @@ const rerenderGameArea = () => {
 
 const release = () => {
   myComponent.onDrag = false;
+  myComponent.onFall = true;
 };
 
 const gameArea = {
