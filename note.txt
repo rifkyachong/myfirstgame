@@ -23,7 +23,9 @@ v   keyboard event
     touch event, preventDefault on touch event prevents mouse click event to occur
 
     Boundary Detector Algorithm
-    1. Closest Method, only detect position. Issue: high speed, very thin obstacle, corner touch (lifted up a bit, it doesn't much an issue).
-    2. Look at the both side of the player box. Issue: very small player box, the solution i made not mutually exclusive
-    3. the best solution is to detect tangent speed and then calculate from there
+v   1. Closest Method, only detect position. Issue: high speed, very thin obstacle, corner touch (lifted up a bit, it doesn't much an issue).
+v   2. Look at the both side of the player box. Issue: very small player box, the solution i made not mutually exclusive
+v   3. the best solution is to detect tangent speed and then calculate from there
+
+    Create mathematical model of boundary Detector
     

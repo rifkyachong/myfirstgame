@@ -1,6 +1,52 @@
 var myComponent, TextComponent;
 var myObstacles;
 
+const areIntersected = (lineA, lineB) => {
+  let [[Xo_a, Yo_a], [X_a, Y_a]] = lineA;
+  let [[Xo_b, Yo_b], [X_b, Y_b]] = lineB;
+
+  // Ax + By = C
+  let [A_1, B_1, C_1] = [
+    Y_a - Yo_a,
+    X_a - Xo_a,
+    (Y_a - Yo_a) * Xo_a + (X_a - Xo_a) * Yo_a,
+  ];
+  let [A_2, B_2, C_2] = [
+    Y_b - Yo_b,
+    X_b - Xo_b,
+    (Y_b - Yo_b) * Xo_b + (X_b - Xo_b) * Yo_b,
+  ];
+
+  let Denominator = A_1 * B_2 - A_2 * B_1;
+
+  if (Denominator == 0) {
+    return false;
+  }
+
+  let [X, Y] = [
+    (B_2 * C_1 - B_1 * C_2) / Denominator,
+    (A_1 * C_2 - A_2 * C_1) / Denominator,
+  ];
+
+  [Xo_a, X_a] = [Math.min(Xo_a, X_a), Math.max(Xo_a, X_a)];
+  [Xo_b, X_b] = [Math.min(Xo_b, X_b), Math.max(Xo_b, X_b)];
+
+  if (
+    Xo_a <= X &&
+    X <= X_a &&
+    Xo_b <= X &&
+    X <= X_b &&
+    Yo_a <= Y &&
+    Y <= Y_a &&
+    Yo_b <= Y &&
+    Y <= Y_b
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
 const startGame = () => {
   gameArea.start();
   myComponent = new Component(0, 0, 20, 20, "green");
@@ -27,11 +73,15 @@ function Text(font, text, style, x, y) {
 function Component(x, y, width, height, color) {
   this.x = x;
   this.y = y;
+  this.rightMax;
+  this.leftMax;
+  this.topMax;
+  this.bottomMax;
+  this.dx = null;
+  this.dy = null;
   this.width = width;
   this.height = height;
   this.color = color;
-  this.speedX = 0;
-  this.speedY = 0;
   this.onDrag = false;
   this.initialOffsetTop = 0;
   this.initialOffsetLeft = 0;
@@ -39,120 +89,101 @@ function Component(x, y, width, height, color) {
     gameArea.context.fillStyle = this.color;
     gameArea.context.fillRect(this.x, this.y, this.width, this.height);
   };
-  this.newPos = () => {
-    this.x += this.speedX;
-    this.y += this.speedY;
-  };
-  this.touch = (obstacle) => {
-    let [topBound, bottomBound, leftBound, rightBound] = [
+  this.checkBoundary = (obstacle) => {
+    let [top, bottom, left, right] = [
       obstacle.y - this.height,
       obstacle.y + obstacle.height,
       obstacle.x - this.width,
       obstacle.x + obstacle.width,
     ];
+    // right obstacle
+    if (
+      this.x <= left &&
+      areIntersected(
+        [
+          [0, this.y],
+          [gameArea.canvas.width, this.y],
+        ],
+        [
+          [left, top],
+          [left, bottom],
+        ]
+      )
+    ) {
+      this.rightMax = left;
+    } else {
+      this.rightMax = gameArea.canvas.width;
+    }
+
+    // right obstacle
+    if (
+      this.x >= right &&
+      areIntersected(
+        [
+          [0, this.y],
+          [gameArea.canvas.width, this.y],
+        ],
+        [
+          [right, top],
+          [right, bottom],
+        ]
+      )
+    ) {
+      this.leftMax = right;
+    } else {
+      this.leftMax = 0;
+    }
+
+    // bottom obstacle
+    if (
+      this.y <= top &&
+      areIntersected(
+        [
+          [this.x, 0],
+          [this.x, gameArea.canvas.height],
+        ],
+        [
+          [right, top],
+          [left, top],
+        ]
+      )
+    ) {
+      this.bottomMax = top;
+    } else {
+      this.bottomMax = gameArea.canvas.height;
+    }
 
     if (
-      this.x > leftBound &&
-      this.x < rightBound &&
-      this.y > topBound &&
-      this.y < bottomBound
+      this.y >= bottom &&
+      areIntersected(
+        [
+          [this.x, 0],
+          [this.x, gameArea.canvas.height],
+        ],
+        [
+          [right, bottom],
+          [left, bottom],
+        ]
+      )
     ) {
-      let distanceTop = Math.abs(this.y - topBound);
-      let distanceBottom = Math.abs(this.y - bottomBound);
-      let distanceLeft = Math.abs(this.x - leftBound);
-      let distanceRight = Math.abs(this.x - rightBound);
-
-      let closest = Math.min(
-        distanceTop,
-        distanceBottom,
-        distanceLeft,
-        distanceRight
-      );
-      if (closest === distanceTop) {
-        this.y = topBound;
-      }
-      if (closest === distanceBottom) {
-        this.y = bottomBound;
-      }
-      if (closest === distanceLeft) {
-        this.x = leftBound;
-      }
-      if (closest === distanceRight) {
-        this.x = rightBound;
-      }
+      this.topMax = bottom;
+    } else {
+      this.topMax = 0;
     }
-    // let [top, bottom, left, right] = [
-    //   this.y,
-    //   this.y + this.height,
-    //   this.x,
-    //   this.x + this.width,
-    // ];
-    // let [topObs, bottomObs, leftObs, rightObs] = [
-    //   obstacle.y,
-    //   obstacle.y + obstacle.height,
-    //   obstacle.x,
-    //   obstacle.x + obstacle.width,
-    // ];
-    // if (
-    //   bottom > topObs &&
-    //   top < bottomObs &&
-    //   right > leftObs &&
-    //   left < leftObs
-    // ) {
-    //   this.x = leftObs - this.width;
-    // }
-    // if (
-    //   bottom > topObs &&
-    //   top < bottomObs &&
-    //   left < rightObs &&
-    //   right > rightObs
-    // ) {
-    //   this.x = rightObs;
-    // }
-    // if (right > leftObs && left < rightObs && bottom > topObs && top < topObs) {
-    //   this.y = topObs - this.height;
-    // }
-    // if (
-    //   right > leftObs &&
-    //   left < rightObs &&
-    //   top < bottomObs &&
-    //   bottom > bottomObs
-    // ) {
-    //   this.y = bottomObs;
-    // }
-
-    // if (
-    //   left > obstacle.x - this.width &&
-    //   left < obstacle.x + obstacle.width &&
-    //   top > obstacle.y - this.height &&
-    //   top < obstacle.y + obstacle.height
-    // ) {
-    //   if (this.speedX > 0) {
-    //     this.x = obstacle.x - this.width;
-    //   }
-    //   if (this.speedX < 0) {
-    //     this.x = obstacle.x + obstacle.width;
-    //   }
-    //   if (this.speedY > 0) {
-    //     this.y = obstacle.y - this.height;
-    //   }
-    //   if (this.speedY < 0) {
-    //     this.y = obstacle.y + obstacle.height;
-    //   }
-    // }
-
-    // if (this.speedX > 0 && right > obstacle.x) {
-    //   this.x = obstacle.x - this.width;
-    // }
-    // if (this.speedX < 0 && left < obstacle.x + obstacle.width) {
-    //   this.x = obstacle.x + obstacle.width;
-    // }
-    // if (this.speedY > 0 && bottom > obstacle.y) {
-    //   this.y = obstacle.y - this.height;
-    // }
-    // if (this.speedY < 0 && top < obstacle.y + obstacle.height) {
-    //   this.y = obstacle.y + obstacle.width;
-    // }
+  };
+  this.newPos = () => {
+    if (this.x > this.rightMax) {
+      this.x = this.rightMax;
+    }
+    if (this.x < this.leftMax) {
+      this.x = this.leftMax;
+    }
+    if (this.y > this.bottomMax) {
+      this.y = this.bottomMax;
+    }
+    if (this.y < this.topMax) {
+      this.y = this.topMax;
+    }
   };
 }
 
@@ -175,31 +206,17 @@ const detectClick = () => {
 
 const rerenderGameArea = () => {
   gameArea.clear();
-  let sumSpeedX = 0;
-  let sumSpeedY = 0;
-  if (gameArea.keys && gameArea.keys["ArrowUp"]) {
-    sumSpeedY -= 1;
-  }
-  if (gameArea.keys && gameArea.keys["ArrowDown"]) {
-    sumSpeedY += 1;
-  }
-  if (gameArea.keys && gameArea.keys["ArrowLeft"]) {
-    sumSpeedX -= 1;
-  }
-  if (gameArea.keys && gameArea.keys["ArrowRight"]) {
-    sumSpeedX += 1;
-  }
-  myComponent.speedX = sumSpeedX;
-  myComponent.speedY = sumSpeedY;
-  myComponent.newPos();
+
+  myComponent.checkBoundary(myObstacles);
 
   if (myComponent.onDrag) {
     myComponent.x = gameArea.cursorPosX - myComponent.initialOffsetLeft;
     myComponent.y = gameArea.cursorPosY - myComponent.initialOffsetTop;
+    myComponent.dx = gameArea.deltaX;
+    myComponent.dy = gameArea.deltaY;
   }
 
-  myComponent.touch(myObstacles);
-
+  myComponent.newPos();
   myComponent.render();
   myTextComponent.render();
   myObstacles.render();
@@ -218,16 +235,6 @@ const gameArea = {
     this.canvas.height = 300;
     document.getElementById("canvas-wrapper").append(this.canvas);
     this.context = this.canvas.getContext("2d");
-
-    window.addEventListener("keydown", (e) => {
-      this.keys = this.keys || [];
-      // console.log(this.keys);
-      this.keys[e.key] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      this.keys[e.key] = false;
-      // console.log(this.keys);
-    });
     this.canvas.addEventListener("mousemove", (e) => {
       this.cursorPosX =
         e.offsetX -
@@ -236,6 +243,9 @@ const gameArea = {
         e.offsetY -
         parseFloat(getComputedStyle(e.target).getPropertyValue("padding-top"));
       // console.log(`cursorX: ${this.cursorPosX}, cursorY: ${this.cursorPosY}`);
+      this.deltaX = e.movementX;
+      this.deltaY = e.movementY;
+      console.log(`cursorX: ${this.deltaX}, cursorY: ${this.deltaY}`);
     });
     this.canvas.addEventListener("mousedown", (e) => {
       detectClick();
