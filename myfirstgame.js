@@ -1,18 +1,14 @@
 var myComponent, TextComponent;
-var upBtn, downBtn, leftBtn, rightBtn, moveBtns;
+var myObstacles;
 
 const startGame = () => {
   gameArea.start();
-  myComponent = new Component(0, 0, 20, 20, "red");
+  myComponent = new Component(0, 0, 20, 20, "green");
   myComponent.render();
   myTextComponent = new Text("12px monospace", "Testing", "black", 450, 290);
   myTextComponent.render();
-  // controllers
-  upBtn = document.getElementById("up-btn");
-  leftBtn = document.getElementById("left-btn");
-  rightBtn = document.getElementById("right-btn");
-  downBtn = document.getElementById("down-btn");
-  moveBtns = document.querySelectorAll(".move-btn");
+  myObstacles = new Component(200, 100, 75, 75, "red");
+  myObstacles.render();
 };
 
 function Text(font, text, style, x, y) {
@@ -47,21 +43,80 @@ function Component(x, y, width, height, color) {
     this.x += this.speedX;
     this.y += this.speedY;
   };
-  // this.onDrag = () => {
-  //   let onDrag = false;
-  //   let left = this.x;
-  //   let right = this.x + this.width;
-  //   let top = this.y;
-  //   let bottom = this.y + this.height;
-  //   if (gameArea.cursorPosX && gameArea.cursorPosY) {
-  //     if (gameArea.cursorPosX > left && gameArea.cursorPosX < right && gameArea.cursorPosY > top && gameArea.cursorPosY < bottom ) {
-  //       this.initialOffsetLeft = gameArea.cursorPosX - this.x;
-  //       this.initialOffsetTop = gameArea.cursorPosY - this.y;
-  //       onDrag = true;
-  //     }
-  //   }
-  //   return onDrag;
-  // }
+  this.touch = (obstacle) => {
+    let [top, bottom, left, right] = [
+      this.y,
+      this.y + this.height,
+      this.x,
+      this.x + this.width,
+    ];
+    let [topObs, bottomObs, leftObs, rightObs] = [
+      obstacle.y,
+      obstacle.y + obstacle.height,
+      obstacle.x,
+      obstacle.x + obstacle.width,
+    ];
+    if (
+      bottom > topObs &&
+      top < bottomObs &&
+      right > leftObs &&
+      left < leftObs
+    ) {
+      this.x = leftObs - this.width;
+    }
+    if (
+      bottom > topObs &&
+      top < bottomObs &&
+      left < rightObs &&
+      right > rightObs
+    ) {
+      this.x = rightObs;
+    }
+    if (right > leftObs && left < rightObs && bottom > topObs && top < topObs) {
+      this.y = topObs - this.height;
+    }
+    if (
+      right > leftObs &&
+      left < rightObs &&
+      top < bottomObs &&
+      bottom > bottomObs
+    ) {
+      this.y = bottomObs;
+    }
+
+    // if (
+    //   left > obstacle.x - this.width &&
+    //   left < obstacle.x + obstacle.width &&
+    //   top > obstacle.y - this.height &&
+    //   top < obstacle.y + obstacle.height
+    // ) {
+    //   if (this.speedX > 0) {
+    //     this.x = obstacle.x - this.width;
+    //   }
+    //   if (this.speedX < 0) {
+    //     this.x = obstacle.x + obstacle.width;
+    //   }
+    //   if (this.speedY > 0) {
+    //     this.y = obstacle.y - this.height;
+    //   }
+    //   if (this.speedY < 0) {
+    //     this.y = obstacle.y + obstacle.height;
+    //   }
+    // }
+
+    // if (this.speedX > 0 && right > obstacle.x) {
+    //   this.x = obstacle.x - this.width;
+    // }
+    // if (this.speedX < 0 && left < obstacle.x + obstacle.width) {
+    //   this.x = obstacle.x + obstacle.width;
+    // }
+    // if (this.speedY > 0 && bottom > obstacle.y) {
+    //   this.y = obstacle.y - this.height;
+    // }
+    // if (this.speedY < 0 && top < obstacle.y + obstacle.height) {
+    //   this.y = obstacle.y + obstacle.width;
+    // }
+  };
 }
 
 const detectClick = () => {
@@ -83,31 +138,34 @@ const detectClick = () => {
 
 const rerenderGameArea = () => {
   gameArea.clear();
-  // let sumSpeedX = 0;
-  // let sumSpeedY = 0;
-  // if (gameArea.keys && gameArea.keys["ArrowUp"]) {
-  //   sumSpeedY -= 1;
-  // }
-  // if (gameArea.keys && gameArea.keys["ArrowDown"]) {
-  //   sumSpeedY += 1;
-  // }
-  // if (gameArea.keys && gameArea.keys["ArrowLeft"]) {
-  //   sumSpeedX -= 1;
-  // }
-  // if (gameArea.keys && gameArea.keys["ArrowRight"]) {
-  //   sumSpeedX += 1;
-  // }
-  // myComponent.speedX = sumSpeedX;
-  // myComponent.speedY = sumSpeedY;
-  // myComponent.newPos();
+  let sumSpeedX = 0;
+  let sumSpeedY = 0;
+  if (gameArea.keys && gameArea.keys["ArrowUp"]) {
+    sumSpeedY -= 1;
+  }
+  if (gameArea.keys && gameArea.keys["ArrowDown"]) {
+    sumSpeedY += 1;
+  }
+  if (gameArea.keys && gameArea.keys["ArrowLeft"]) {
+    sumSpeedX -= 1;
+  }
+  if (gameArea.keys && gameArea.keys["ArrowRight"]) {
+    sumSpeedX += 1;
+  }
+  myComponent.speedX = sumSpeedX;
+  myComponent.speedY = sumSpeedY;
+  myComponent.newPos();
 
   if (myComponent.onDrag) {
     myComponent.x = gameArea.cursorPosX - myComponent.initialOffsetLeft;
     myComponent.y = gameArea.cursorPosY - myComponent.initialOffsetTop;
   }
 
+  myComponent.touch(myObstacles);
+
   myComponent.render();
   myTextComponent.render();
+  myObstacles.render();
   //process before update
   window.requestAnimationFrame(rerenderGameArea);
 };
@@ -148,46 +206,6 @@ const gameArea = {
     this.canvas.addEventListener("mouseup", (e) => {
       release();
     });
-    // this.canvas.addEventListener("mousedown", (e) => {
-    //   console.log("onmousedown called");
-    //   if (e.which === 1) {
-    //     myComponent.initialOffsetTop =
-    //       e.offsetY -
-    //       parseFloat(
-    //         getComputedStyle(e.target).getPropertyValue("padding-top")
-    //       ) -
-    //       myComponent.y;
-    //     myComponent.initialOffsetLeft =
-    //       e.offsetX -
-    //       parseFloat(
-    //         getComputedStyle(e.target).getPropertyValue("padding-left")
-    //       ) -
-    //       myComponent.x;
-    //     myComponent.onDrag = true;
-    //   }
-    // });
-    // this.canvas.addEventListener("mouseup", (e) => {
-    //   if (e.which === 1) {
-    //     myComponent.onDrag = false;
-    //   }
-    // });
-    // this.canvas.addEventListener("mousemove", (e) => {
-    //   console.log(`x: ${e.pageX} , y: ${e.pageY}`);
-    //   if (myComponent.onDrag) {
-    //     myComponent.y =
-    //       e.offsetY -
-    //       parseFloat(
-    //         getComputedStyle(e.target).getPropertyValue("padding-top")
-    //       ) -
-    //       myComponent.initialOffsetTop;
-    //     myComponent.x =
-    //       e.offsetX -
-    //       parseFloat(
-    //         getComputedStyle(e.target).getPropertyValue("padding-left")
-    //       ) -
-    //       myComponent.initialOffsetLeft;
-    //   }
-    // });
   },
   clear: function () {
     if (this.context) {
