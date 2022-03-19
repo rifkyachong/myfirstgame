@@ -1,6 +1,6 @@
 const startGame = () => {
   gameArea.start();
-  gameArea.tileGrid[0][0] = new Tile(4, 4, 62, 67, "red");
+  gameArea.tileGrid[0][0] = new Tile(9, 9, 62, 67, "red");
 };
 
 const rerenderGameArea = () => {
@@ -56,6 +56,8 @@ const gameArea = {
         e.offsetY -
         parseFloat(getComputedStyle(e.target).getPropertyValue("padding-top"));
 
+      // console.log(`x: ${this.X_pos}, y: ${this.Y_pos}`);
+
       this.Col_pos = Math.min(
         Math.max(Math.floor(this.X_pos / gridOptions.tile_Width), 0),
         gridOptions.n_Col - 1
@@ -77,7 +79,9 @@ const gameArea = {
         let tile = this.tileGrid[this.Row_pos][this.Col_pos];
         if (tile) {
           this.activeTile = tile;
-          // tile.select();
+
+          // probably to this once
+          // moveTile(this.activeTile);
         }
       }
     });
@@ -87,11 +91,11 @@ const gameArea = {
         // snap to grid
         this.activeTile.x =
           layoutOptions.padding +
-          this.Col_pos * gridOptions.tile_Width +
+          this.activeTile.Col_index * gridOptions.tile_Width +
           gridOptions.padding;
         this.activeTile.y =
           layoutOptions.padding +
-          this.Row_pos * gridOptions.tile_Height +
+          this.activeTile.Row_index * gridOptions.tile_Height +
           gridOptions.padding;
         this.activeTile = null;
       }
