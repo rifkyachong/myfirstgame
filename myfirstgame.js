@@ -82,6 +82,24 @@ const gameArea = {
       if (e.which === 1) {
         let tile = this.tileGrid[this.Row_pos][this.Col_pos];
         if (tile) {
+          // if we grab the falling tile, that fallingTile array will be changed
+          if (this.fallingTile.flat().includes(tile)) {
+            let top_Tile = this.fallingTile
+              .map((tile_Stack) => tile_Stack.slice(-1))
+              .flat();
+            // the top stack of tile_Stack is grabable
+            if (top_Tile.includes(tile)) {
+              let index = top_Tile.indexOf(tile);
+              this.fallingTile[index].pop();
+              this.fallingTile = this.fallingTile.filter(
+                (tile_Stack) => tile_Stack.length > 0
+              );
+            } // otherwise the tile is ungrabable
+            else {
+              return;
+            }
+          }
+
           this.activeTile = tile;
 
           // probably to this once
@@ -92,15 +110,24 @@ const gameArea = {
 
     this.canvas.addEventListener("mouseup", (e) => {
       if (this.activeTile) {
-        // snap to grid
-        this.activeTile.x =
-          layoutOptions.padding +
-          this.activeTile.Col_index * gridOptions.tile_Width +
-          gridOptions.padding;
-        this.activeTile.y =
-          layoutOptions.padding +
-          this.activeTile.Row_index * gridOptions.tile_Height +
-          gridOptions.padding;
+        // if there is a tile below
+        if (this.activeTile.checkAdjacentTile().bottom) {
+          this.activeTile.x =
+            layoutOptions.padding +
+            this.activeTile.Col_index * gridOptions.tile_Width +
+            gridOptions.padding;
+          this.activeTile.y =
+            layoutOptions.padding +
+            this.activeTile.Row_index * gridOptions.tile_Height +
+            gridOptions.padding;
+        } // process fall otherwise
+        else {
+          this.activeTile.x =
+            layoutOptions.padding +
+            this.activeTile.Col_index * gridOptions.tile_Width +
+            gridOptions.padding;
+          this.fallingTile.push([this.activeTile]);
+        }
         this.activeTile = null;
       }
     });

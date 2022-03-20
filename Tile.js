@@ -73,29 +73,42 @@ function Tile(Row_index, Col_index, color) {
     // );
     return this.boundary;
   };
+  this.verifyPath = function (destinationPoint) {
+    // destination and origin has to be different, if in the moveTile
+    let [destination_Row, destination_Col] = destinationPoint;
+    let [current_Row, current_Col] = [this.Row_index, this.Col_index];
+    while (current_Row !== destination_Row) {
+      let step_Row = destination_Row > current_Row ? 1 : -1;
+      if (
+        gameArea.tileGrid[current_Row + step_Row][current_Col] instanceof Tile
+      ) {
+        return [current_Row, current_Col];
+      }
+      current_Row += step_Row;
+    }
+    while (current_Col !== destination_Col) {
+      let step_Col = destination_Col > current_Col ? 1 : -1;
+      if (
+        gameArea.tileGrid[current_Row][current_Col + step_Col] instanceof Tile
+      ) {
+        return [current_Row, current_Col];
+      }
+      current_Col += step_Col;
+    }
+    return [current_Row, current_Col];
+  };
 }
 
 const moveTile = (tile) => {
-  let adjacentTile = tile.checkAdjacentTile();
-  const [new_Row_Index, new_Col_Index] = [gameArea.Row_pos, gameArea.Col_pos];
+  const [new_Row_Index, new_Col_Index] = tile.verifyPath([
+    gameArea.Row_pos,
+    gameArea.Col_pos,
+  ]);
 
-  // if there is no adjacent top boundary and the new posision is above previous position
-  if (!adjacentTile.top && new_Row_Index < tile.Row_index) {
-    tile.Row_index = new_Row_Index;
-  }
-  if (!adjacentTile.bottom && new_Row_Index > tile.Row_index) {
-    tile.Row_index = new_Row_Index;
-  }
+  const [prev_Row_Index, prev_Col_Index] = [tile.Row_index, tile.Col_index];
+  tile.Row_index = new_Row_Index;
+  tile.Col_index = new_Col_Index;
 
-  if (!adjacentTile.left && new_Col_Index < tile.Col_index) {
-    tile.Col_index = new_Col_Index;
-  }
-  if (!adjacentTile.right && new_Col_Index > tile.Col_index) {
-    tile.Col_index = new_Col_Index;
-  }
-
-  // update tile grid if there is an actual change in tile position
-  const [prev_Row_Index, prev_Col_Index] = gameArea.tileGrid.multiIndexOf(tile);
   if (prev_Row_Index !== tile.Row_index || prev_Col_Index !== tile.Col_index) {
     gameArea.tileGrid[prev_Row_Index][prev_Col_Index] = null;
     gameArea.tileGrid[tile.Row_index][tile.Col_index] = tile;
@@ -185,7 +198,7 @@ const moveTile = (tile) => {
 
 const processFallingTile = () => {
   gameArea.fallingTile = gameArea.fallingTile.filter((tile_Stack) => {
-    tile_Stack.forEach((tile) => {
+    tile_Stack.forEach((tile, index) => {
       if (tile.fallingSpeed === null) {
         tile.fallingSpeed = 0;
       }
@@ -200,14 +213,17 @@ const processFallingTile = () => {
 
       tile.y += tile.fallingSpeed;
 
-      // update that tileGrid
-      let new_Row_index = Math.floor(
-        (tile.y + tile.height * 0.5) / gridOptions.tile_Height
-      );
-      if (new_Row_index !== tile.Row_index) {
-        gameArea.tileGrid[tile.Row_index][tile.Col_index] = null;
-        gameArea.tileGrid[new_Row_index][tile.Col_index] = tile;
-        tile.Row_index = new_Row_index;
+      const boundary = tile.checkAdjacentTile();
+      if (!boundary.bottom) {
+        // update that tileGrid
+        let new_Row_index = Math.floor(
+          (tile.y + tile.height) / gridOptions.tile_Height
+        );
+        if (new_Row_index !== tile.Row_index) {
+          gameArea.tileGrid[tile.Row_index][tile.Col_index] = null;
+          gameArea.tileGrid[new_Row_index][tile.Col_index] = tile;
+          tile.Row_index = new_Row_index;
+        }
       }
     });
     const boundary = tile_Stack[0].checkAdjacentTile();
@@ -224,6 +240,7 @@ const processFallingTile = () => {
             tile.Row_index * gridOptions.tile_Height +
             gridOptions.padding +
             layoutOptions.padding;
+          tile.fallingSpeed = null;
         });
         return false;
       }
@@ -237,6 +254,11 @@ const arrangeNewTile = () => {
   let i = 0;
   while (i < 7) {
     gameArea.tileGrid[7][i] = new Tile(7, i, generateRandomColor());
+    i++;
+  }
+  i = 0;
+  while (i < 7) {
+    gameArea.tileGrid[6][i] = new Tile(6, i, generateRandomColor());
     i++;
   }
 };
