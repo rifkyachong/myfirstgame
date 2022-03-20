@@ -1,14 +1,21 @@
 // dependencies: gameArea, gridOptions
 
-function Tile(x, y, width, height, color) {
-  this.x = x;
-  this.y = y;
+function Tile(Row_index, Col_index, color) {
+  this.x =
+    layoutOptions.padding +
+    Col_index * gridOptions.tile_Width +
+    gridOptions.padding;
+  this.y =
+    layoutOptions.padding +
+    Row_index * gridOptions.tile_Height +
+    gridOptions.padding;
   // this is temporary
-  this.Row_index = 0;
-  this.Col_index = 0;
+  this.Row_index = Row_index;
+  this.Col_index = Col_index;
 
-  this.width = width;
-  this.height = height;
+  this.fallingSpeed = null;
+  this.width = gridOptions.tile_Width - 2 * gridOptions.padding;
+  this.height = gridOptions.tile_Height - 2 * gridOptions.padding;
   this.color = color;
   this.boundary = {
     top: false,
@@ -69,7 +76,7 @@ function Tile(x, y, width, height, color) {
 }
 
 const moveTile = (tile) => {
-  const adjacentTile = tile.checkAdjacentTile();
+  let adjacentTile = tile.checkAdjacentTile();
   const [new_Row_Index, new_Col_Index] = [gameArea.Row_pos, gameArea.Col_pos];
 
   // if there is no adjacent top boundary and the new posision is above previous position
@@ -89,9 +96,27 @@ const moveTile = (tile) => {
 
   // update tile grid if there is an actual change in tile position
   const [prev_Row_Index, prev_Col_Index] = gameArea.tileGrid.multiIndexOf(tile);
-  if ([prev_Row_Index, prev_Col_Index] !== [tile.Row_index, tile.Col_index]) {
+  if (prev_Row_Index !== tile.Row_index || prev_Col_Index !== tile.Col_index) {
     gameArea.tileGrid[prev_Row_Index][prev_Col_Index] = null;
     gameArea.tileGrid[tile.Row_index][tile.Col_index] = tile;
+
+    // check if there is potential falling element (only for side movement)
+    if (prev_Col_Index !== tile.Col_index) {
+      let tile_Stack = [];
+      if (prev_Row_Index > 0) {
+        let i_Row_Index = prev_Row_Index - 1;
+        while (gameArea.tileGrid[i_Row_Index][prev_Col_Index]) {
+          tile_Stack.push(gameArea.tileGrid[i_Row_Index][prev_Col_Index]);
+          i_Row_Index -= 1;
+          if (i_Row_Index < 0) {
+            break;
+          }
+        }
+      }
+      if (tile_Stack.length > 0) {
+        gameArea.fallingTile.push(tile_Stack);
+      }
+    }
   }
 
   // calculate position as a function of cursor position depending on boundary condition (this is for rendering purposes)
@@ -99,6 +124,8 @@ const moveTile = (tile) => {
     layoutOptions.padding + (tile.Col_index + 0.5) * gridOptions.tile_Width;
   const Y_center_Pos =
     layoutOptions.padding + (tile.Row_index + 0.5) * gridOptions.tile_Height;
+
+  adjacentTile = tile.checkAdjacentTile();
 
   // top boundary
   const reduceSensitivity = 0.1;
@@ -153,5 +180,63 @@ const moveTile = (tile) => {
     } else {
       tile.x = gameArea.X_pos - tile.width * 0.5;
     }
+  }
+};
+
+const processFallingTile = () => {
+  gameArea.fallingTile = gameArea.fallingTile.filter((tile_Stack) => {
+    tile_Stack.forEach((tile) => {
+      if (tile.fallingSpeed === null) {
+        tile.fallingSpeed = 0;
+      }
+
+      let acceleration = 0.2;
+      let terminalVel = 3;
+
+      tile.fallingSpeed = Math.min(
+        tile.fallingSpeed + acceleration,
+        terminalVel
+      );
+
+      tile.y += tile.fallingSpeed;
+
+      // update that tileGrid
+      let new_Row_index = Math.floor(
+        (tile.y + tile.height * 0.5) / gridOptions.tile_Height
+      );
+      if (new_Row_index !== tile.Row_index) {
+        gameArea.tileGrid[tile.Row_index][tile.Col_index] = null;
+        gameArea.tileGrid[new_Row_index][tile.Col_index] = tile;
+        tile.Row_index = new_Row_index;
+      }
+    });
+    const boundary = tile_Stack[0].checkAdjacentTile();
+    if (boundary.bottom) {
+      if (
+        tile_Stack[0].y >
+        tile_Stack[0].Row_index * gridOptions.tile_Height +
+          gridOptions.padding +
+          layoutOptions.padding
+      ) {
+        // stop the falling process
+        tile_Stack.forEach((tile) => {
+          tile.y =
+            tile.Row_index * gridOptions.tile_Height +
+            gridOptions.padding +
+            layoutOptions.padding;
+        });
+        return false;
+      }
+    }
+    // continue the falling process
+    return true;
+  });
+};
+
+const arrangeNewTile = () => {
+  let i = 0;
+  while (i < 7) {
+    gameArea.tileGrid[7][i] = new Tile(7, i, generateRandomColor());
+    i++;
   }
 };

@@ -1,12 +1,19 @@
 const startGame = () => {
   gameArea.start();
-  gameArea.tileGrid[0][0] = new Tile(9, 9, 62, 67, "red");
 };
 
 const rerenderGameArea = () => {
   // clear gamaarea
   gameArea.clear();
   // process before building
+  if (gameArea.fallingTile.length > 0) {
+    processFallingTile();
+  }
+
+  // mouse interaction
+  if (gameArea.activeTile) {
+    moveTile(gameArea.activeTile);
+  }
 
   // building game area
   gameArea.tileGrid
@@ -33,6 +40,7 @@ const gameArea = {
   canvas: document.createElement("canvas"),
   context: null,
   activeTile: null,
+  fallingTile: [],
   X_pos: 0,
   Y_pos: 0,
   Col_pos: 0,
@@ -67,10 +75,6 @@ const gameArea = {
         Math.max(Math.floor(this.Y_pos / gridOptions.tile_Height), 0),
         gridOptions.n_Row - 1
       );
-
-      if (this.activeTile) {
-        moveTile(this.activeTile);
-      }
     });
 
     this.canvas.addEventListener("mousedown", (e) => {
@@ -101,6 +105,7 @@ const gameArea = {
       }
     });
 
+    arrangeNewTile();
     window.requestAnimationFrame(rerenderGameArea);
   },
   clear: function () {

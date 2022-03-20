@@ -28,3 +28,10 @@ v   2. Look at the both side of the player box. Issue: very small player box, th
 v   3. the best solution is to detect tangent speed and then calculate from there
 
 v   Create mathematical model of boundary Detector
+
+    diagonal move bug, high mouse movement can delete the element.
+
+    Every moveTile function is called:
+    1. tile.Row_index and tile.Col_index changed based on new cursor Row and Col position.
+    2. updating gameArea.gridTile based on new tile.Row position and prevTile position.
+    3. determine x and y. 
