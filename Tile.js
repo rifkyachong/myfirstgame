@@ -1,6 +1,6 @@
 // dependencies: gameArea, gridOptions
 
-function Tile(Row_index, Col_index, color) {
+function Tile(Row_index, Col_index, number) {
   this.x =
     layoutOptions.padding +
     Col_index * gridOptions.tile_Width +
@@ -16,7 +16,8 @@ function Tile(Row_index, Col_index, color) {
   this.fallingSpeed = null;
   this.width = gridOptions.tile_Width - 2 * gridOptions.padding;
   this.height = gridOptions.tile_Height - 2 * gridOptions.padding;
-  this.color = color;
+  this.color = "#F2E6AF";
+  this.number = number;
   this.boundary = {
     top: false,
     bottom: false,
@@ -24,14 +25,27 @@ function Tile(Row_index, Col_index, color) {
     right: false,
   };
   this.render = function () {
-    gameArea.context.fillStyle = color;
+    gameArea.context.fillStyle = this.color;
     gameArea.context.fillRect(this.x, this.y, this.width, this.height);
+    gameArea.context.font = "40px Georgia";
+    gameArea.context.fillStyle = "black";
+    if (this.number > 9) {
+      gameArea.context.fillText(this.number, this.x + 10, this.y + 40);
+    } else {
+      gameArea.context.fillText(this.number, this.x + 20, this.y + 40);
+    }
+  };
+  this.sameNumberTo = function (tile) {
+    return this.number === tile.number;
   };
   this.checkAdjacentTile = function () {
     // check right
     if (
       this.Col_index + 1 === gridOptions.n_Col ||
-      gameArea.tileGrid[this.Row_index][this.Col_index + 1] instanceof Tile
+      (gameArea.tileGrid[this.Row_index][this.Col_index + 1] instanceof Tile &&
+        !this.sameNumberTo(
+          gameArea.tileGrid[this.Row_index][this.Col_index + 1]
+        ))
     ) {
       this.boundary.right = true;
     } else {
@@ -41,7 +55,10 @@ function Tile(Row_index, Col_index, color) {
     // check left
     if (
       this.Col_index === 0 ||
-      gameArea.tileGrid[this.Row_index][this.Col_index - 1] instanceof Tile
+      (gameArea.tileGrid[this.Row_index][this.Col_index - 1] instanceof Tile &&
+        !this.sameNumberTo(
+          gameArea.tileGrid[this.Row_index][this.Col_index - 1]
+        ))
     ) {
       this.boundary.left = true;
     } else {
@@ -51,7 +68,10 @@ function Tile(Row_index, Col_index, color) {
     // check top
     if (
       this.Row_index === 0 ||
-      gameArea.tileGrid[this.Row_index - 1][this.Col_index] instanceof Tile
+      (gameArea.tileGrid[this.Row_index - 1][this.Col_index] instanceof Tile &&
+        !this.sameNumberTo(
+          gameArea.tileGrid[this.Row_index - 1][this.Col_index]
+        ))
     ) {
       this.boundary.top = true;
     } else {
@@ -61,7 +81,10 @@ function Tile(Row_index, Col_index, color) {
     // check bottom
     if (
       this.Row_index + 1 === gridOptions.n_Row ||
-      gameArea.tileGrid[this.Row_index + 1][this.Col_index] instanceof Tile
+      (gameArea.tileGrid[this.Row_index + 1][this.Col_index] instanceof Tile &&
+        !this.sameNumberTo(
+          gameArea.tileGrid[this.Row_index + 1][this.Col_index]
+        ))
     ) {
       this.boundary.bottom = true;
     } else {
@@ -82,7 +105,15 @@ function Tile(Row_index, Col_index, color) {
       if (
         gameArea.tileGrid[current_Row + step_Row][current_Col] instanceof Tile
       ) {
-        return [current_Row, current_Col];
+        if (
+          this.sameNumberTo(
+            gameArea.tileGrid[current_Row + step_Row][current_Col]
+          )
+        ) {
+          return [current_Row + step_Row, current_Col];
+        } else {
+          return [current_Row, current_Col];
+        }
       }
       current_Row += step_Row;
     }
@@ -91,11 +122,22 @@ function Tile(Row_index, Col_index, color) {
       if (
         gameArea.tileGrid[current_Row][current_Col + step_Col] instanceof Tile
       ) {
-        return [current_Row, current_Col];
+        if (
+          this.sameNumberTo(
+            gameArea.tileGrid[current_Row][current_Col + step_Col]
+          )
+        ) {
+          return [current_Row, current_Col + step_Col];
+        } else {
+          return [current_Row, current_Col];
+        }
       }
       current_Col += step_Col;
     }
     return [current_Row, current_Col];
+  };
+  this.combineTile = function (tile) {
+    this.number += 1;
   };
 }
 
@@ -111,7 +153,6 @@ const moveTile = (tile) => {
 
   if (prev_Row_Index !== tile.Row_index || prev_Col_Index !== tile.Col_index) {
     gameArea.tileGrid[prev_Row_Index][prev_Col_Index] = null;
-    gameArea.tileGrid[tile.Row_index][tile.Col_index] = tile;
 
     // check if there is potential falling element (only for side movement)
     if (prev_Col_Index !== tile.Col_index) {
@@ -130,6 +171,16 @@ const moveTile = (tile) => {
         gameArea.fallingTile.push(tile_Stack);
       }
     }
+    if (
+      gameArea.tileGrid[tile.Row_index][tile.Col_index] &&
+      gameArea.tileGrid[tile.Row_index][tile.Col_index].sameNumberTo(tile)
+    ) {
+      gameArea.tileGrid[tile.Row_index][tile.Col_index].combineTile(tile);
+      gameArea.activeTile = null;
+      return;
+    }
+
+    gameArea.tileGrid[tile.Row_index][tile.Col_index] = tile;
   }
 
   // calculate position as a function of cursor position depending on boundary condition (this is for rendering purposes)
@@ -198,7 +249,7 @@ const moveTile = (tile) => {
 
 const processFallingTile = () => {
   gameArea.fallingTile = gameArea.fallingTile.filter((tile_Stack) => {
-    tile_Stack.forEach((tile, index) => {
+    tile_Stack.forEach((tile) => {
       if (tile.fallingSpeed === null) {
         tile.fallingSpeed = 0;
       }
@@ -220,8 +271,11 @@ const processFallingTile = () => {
           (tile.y + tile.height) / gridOptions.tile_Height
         );
         if (new_Row_index !== tile.Row_index) {
+          // if new row position has a tile (which means it must be a same Tile), do not replace it
           gameArea.tileGrid[tile.Row_index][tile.Col_index] = null;
-          gameArea.tileGrid[new_Row_index][tile.Col_index] = tile;
+          if (!gameArea.tileGrid[new_Row_index][tile.Col_index]) {
+            gameArea.tileGrid[new_Row_index][tile.Col_index] = tile;
+          }
           tile.Row_index = new_Row_index;
         }
       }
@@ -242,6 +296,12 @@ const processFallingTile = () => {
             layoutOptions.padding;
           tile.fallingSpeed = null;
         });
+        // before returning we might want to check if there is a same tile in here
+        const [row, col] = [tile_Stack[0].Row_index, tile_Stack[0].Col_index];
+        if (gameArea.tileGrid[row][col] !== tile_Stack[0]) {
+          gameArea.tileGrid[row][col].combineTile(tile_Stack[0]);
+        }
+
         return false;
       }
     }
@@ -253,12 +313,12 @@ const processFallingTile = () => {
 const arrangeNewTile = () => {
   let i = 0;
   while (i < 7) {
-    gameArea.tileGrid[7][i] = new Tile(7, i, generateRandomColor());
+    gameArea.tileGrid[7][i] = new Tile(7, i, Math.floor(Math.random() * 5) + 1);
     i++;
   }
   i = 0;
   while (i < 7) {
-    gameArea.tileGrid[6][i] = new Tile(6, i, generateRandomColor());
+    gameArea.tileGrid[6][i] = new Tile(6, i, Math.floor(Math.random() * 5) + 1);
     i++;
   }
 };

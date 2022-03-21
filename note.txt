@@ -35,3 +35,8 @@ v   Create mathematical model of boundary Detector
     1. tile.Row_index and tile.Col_index changed based on new cursor Row and Col position.
     2. updating gameArea.gridTile based on new tile.Row position and prevTile position.
     3. determine x and y. 
+
+
+    we probably need to destructure deleted Tile object to prevent memory leak.
+    combineTile , a method to combine Tile.
+    after combining, probably check for possible another combine Chaining.

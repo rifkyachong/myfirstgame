@@ -20,6 +20,11 @@ const rerenderGameArea = () => {
     .flat()
     .filter((tile) => tile instanceof Tile)
     .forEach((tile) => tile.render());
+
+  gameArea.fallingTile
+    .flat()
+    .filter((tile) => tile instanceof Tile)
+    .forEach((tile) => tile.render());
   // render
   window.requestAnimationFrame(rerenderGameArea);
 };
